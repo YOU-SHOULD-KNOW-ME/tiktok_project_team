@@ -364,3 +364,61 @@ func Updatename(newname string, id int) {
 	}
 	fmt.Println(n)
 }
+
+// ********************************************* comment 功能区 ***********************************************************
+
+//新增评论
+func Insertcomment(userId int, videoId int, commentText string, createTime string) (commentId int64) {
+	insert, err := Db.Prepare("insert into comments(user_id,video_id,comment_text,create_time,if_cancel) values(?,?,?,?,?);")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer insert.Close()
+	result, err := insert.Exec(userId,videoId,commentText,createTime,0)
+	if err != nil {
+		fmt.Println(err)
+	}
+	Id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(Id, "号评论插入成功")
+	return Id
+}
+
+//更新评论的状态即删除评论
+func Deletecomment(commentId int,videoId int)  {
+	update := `update comments set if_cancel=1 where id = ? and video_id = ?`
+	reseult, err := Db.Exec(update, commentId, videoId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	n, err := reseult.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(n)
+}
+
+//评论列表
+func Commentlist(videoId int, list *[]Comment){
+	rows, err := Db.Query("select id,user_id,comment_text,create_time from comments where video_id = ? and if_cancel = 0 order by create_time desc ;",videoId) // 根据key:id来查询comment信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+	for rows.Next() {
+		var C Comment
+		var UserId int
+		err := rows.Scan(&C.Id,&UserId,&C.Content,&C.CreateDate) //接收信息
+		if err != nil {
+			fmt.Println(err)
+		}
+		user := QueryUserOne(UserId)
+		C.User = user
+		*list = append(*list, C)
+	}
+}
+
