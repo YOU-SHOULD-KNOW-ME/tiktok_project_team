@@ -9,6 +9,7 @@ var Db *sql.DB //这个是数据库连接池，用来管理数据库的各种链
 
 var user User
 
+
 type Response struct {
 	StatusCode int32  `json:"status_code"`
 	StatusMsg  string `json:"status_msg,omitempty"`

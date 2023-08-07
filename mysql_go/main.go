@@ -1,3 +1,6 @@
+// ****
+// ****这个包是用来测试mysql数据库的，并且封装了一些对于数据库基本操作的函数
+// ****
 package main
 
 import (
@@ -102,6 +105,16 @@ func Deleteall() {
 		fmt.Println(err)
 	}
 
+	// 将用户数量归零
+	deletecomment, err := Db.Prepare("DELETE FROM comments;")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer deletecomment.Close()
+	_, err = deletecomment.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // ********************************************* user 功能区 ***********************************************************

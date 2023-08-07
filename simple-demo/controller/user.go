@@ -45,6 +45,11 @@ func Register(c *gin.Context) {
 			Response: Response{StatusCode: 1, StatusMsg: "该账号已存在!"},
 		})
 	} else {
+		for i := range PublishVideos {
+			PublishVideos[i].IsFavorite = false
+
+		}
+		FavoriteVideos = FavoriteVideos[:0]
 		atomic.AddInt64(&userIdSequence, 1)                                                                                                                                                                                                //将用户数量加1
 		InsertUser(userIdSequence, username, 0, 0, false, "https://graphatk1141087952.oss-cn-beijing.aliyuncs.com/init_avatar.jpg", "https://graphatk1141087952.oss-cn-beijing.aliyuncs.com/init_background.jpg", "hi,tiktok!", "0", 0, 0) //将user信息同步添加到数据库
 		AddUserCount(userIdSequence)
@@ -52,9 +57,15 @@ func Register(c *gin.Context) {
 		newUser := User{
 			Id:               userIdSequence,
 			Name:             username,
+			FollowCount:      0,
+			FollowerCount:    0,
+			IsFollow:         false,
 			Avatar:           "https://graphatk1141087952.oss-cn-beijing.aliyuncs.com/init_avatar.jpg",
 			Background_image: "https://graphatk1141087952.oss-cn-beijing.aliyuncs.com/init_background.jpg",
 			Signature:        "hi,tiktok!",
+			Total_favorited:  "None",
+			Work_count:       0,
+			Favorite_count:   0,
 		}
 		usersLoginInfo[token] = newUser // 将该注册用户添加索引
 		c.JSON(http.StatusOK, UserLoginResponse{
@@ -71,11 +82,24 @@ func Login(c *gin.Context) {
 	fmt.Println("用户名是:", username, "密码是:", password)
 	token := username + password
 
-	if user, exist := usersLoginInfo[token]; exist {
+	if users, exist := usersLoginInfo[token]; exist {
 		fmt.Println("用户有效，登陆成功!")
+
+		is_favorite := QueryFavoriteVideos(token)
+		fmt.Println(is_favorite)
+		FavoriteVideos = FavoriteVideos[:0]
+		for i := range PublishVideos {
+			if is_favorite[int(PublishVideos[i].Id)] == true {
+				PublishVideos[i].IsFavorite = true
+				FavoriteVideos = append(FavoriteVideos, PublishVideos[i])
+
+			} else {
+				PublishVideos[i].IsFavorite = false
+			}
+		}
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 0},
-			UserId:   user.Id,
+			UserId:   users.Id,
 			Token:    token,
 		})
 	} else {
@@ -91,12 +115,16 @@ func UserInfo(c *gin.Context) { //这个函数在用户登录完成后调用
 	fmt.Println("用户状态检测")
 	UserVideoList[token] = []Video{}
 	QueryToken(token)
-	fmt.Println(UserVideoList[token])
 	user = usersLoginInfo[token]
+	user.Work_count = int64(len(UserVideoList[token]))
+	usersLoginInfo[token] = user
+	users := usersLoginInfo[token]
+	users.Favorite_count = int64(len(FavoriteVideos))
+	fmt.Println(users)
 	if _, exist := usersLoginInfo[token]; exist {
 		c.JSON(http.StatusOK, UserResponse{
 			Response: Response{StatusCode: 0},
-			User:     user,
+			User:     users,
 		})
 
 	} else {

@@ -15,11 +15,13 @@ type FeedResponse struct {
 
 // Feed same demo video list for every request
 func Feed(c *gin.Context) {
+	token := c.Query("token")
 	fmt.Println("*****正在执行feed流函数")
-	fmt.Println(PublishVideos)
+	PublishVideos = PublishVideos[:0]
+	UpdateVideoList(&PublishVideos, token)
 	c.JSON(http.StatusOK, FeedResponse{
 		Response:  Response{StatusCode: 0},
-		VideoList: PublishVideos, // 这里传的是DemoVideos
+		VideoList: PublishVideos, // 这里传的是PublishVideos
 		NextTime:  time.Now().Unix(),
 	})
 

@@ -16,7 +16,7 @@ func main() {
 	} //初始化数据库连接池，连接云服务器数据库
 
 	controller.Init() // 初始化数据池，其中包括video,user......
-
+	controller.Init_Redis()
 	r := gin.Default()
 
 	InitRouter(r)

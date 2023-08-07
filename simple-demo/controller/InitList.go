@@ -1,3 +1,5 @@
+// 这个包用来初始化所有数据当用户开启软件时
+
 package controller
 
 func InitPublishVideos() {

@@ -35,13 +35,13 @@ var DemoComments = []Comment{
 	},
 }
 
-var user1 = User{
-	Id:            1,
-	Name:          "user1",
-	FollowCount:   1314,
-	FollowerCount: 1000000,
-	IsFollow:      true,
-}
+//var user1 = User{
+//	Id:            1,
+//	Name:          "user1",
+//	FollowCount:   1314,
+//	FollowerCount: 1000000,
+//	IsFollow:      true,
+//}
 
 var DemoUser = User{
 	Id:            0,

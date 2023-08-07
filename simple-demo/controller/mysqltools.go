@@ -8,6 +8,7 @@ package controller
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 )
 
 // 初始化数据库连接池并连接数据库
@@ -184,6 +185,19 @@ func InsertPassword(password string, user_id int64) {
 	}
 }
 
+func Userid_Query_Token(id int) (token string) {
+	query, err := Db.Prepare("select password from password where user_id = ?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer query.Close()
+	err = query.QueryRow(id).Scan(&token)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return token
+}
+
 func DeleteUser(id int) {
 	deletevar, err := Db.Prepare("delete from user where id=?")
 	if err != nil {
@@ -198,6 +212,46 @@ func DeleteUser(id int) {
 	n, err := result.RowsAffected()
 	if err != nil {
 		fmt.Println(err)
+	}
+	fmt.Println(n)
+}
+
+// 数据库同步更新用户的喜爱数
+func Updateuser_favorite_count(id int64, newcount int64) {
+	update, err := Db.Prepare("update user set favorite_count=? where id = ?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	reseult, err := update.Exec(newcount, id)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	n, err := reseult.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(n)
+}
+
+// 数据库同步更新用户的获赞数
+func Updateuser_total_favorite(id int64, new int64) {
+	update, err := Db.Prepare("update user set total_favorited=? where id = ?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	reseult, err := update.Exec(strconv.Itoa(int(new)), id)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	n, err := reseult.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 	fmt.Println(n)
 }
@@ -274,7 +328,34 @@ func QueryVideoMore(list *[]Video) {
 		}
 		user := QueryUserOne(I)
 		V.Author = user
-		fmt.Println(V)
+		*list = append(*list, V)
+	}
+}
+
+func UpdateVideoList(list *[]Video, token string) {
+	query, err := Db.Prepare("select * from video where id > 0;") //定义查询语句
+	if err != nil {
+		fmt.Println(err)
+	}
+	rows, err := query.Query() // 根据key:id来查询user信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+	for rows.Next() {
+		var V Video
+		var I int
+		err := rows.Scan(&V.Id, &I, &V.PlayUrl, &V.CoverUrl, &V.FavoriteCount, &V.CommentCount, &V.IsFavorite, &V.Title) //接收信息
+		if err != nil {
+			fmt.Println(err)
+		}
+		favorite := QueryFavoriteVideos(token)
+		fmt.Println("该用户的喜欢map为", favorite)
+		if favorite[int(V.Id)] == true {
+			V.IsFavorite = true
+		}
+		user := QueryUserOne(I)
+		V.Author = user
 		*list = append(*list, V)
 	}
 }
@@ -331,6 +412,42 @@ func Deletevideo(id int) {
 	fmt.Println(n, "号删除成功!")
 }
 
+func UpdateVideoFavoriteCount(Id int64, newcount int64) {
+	update, err := Db.Prepare("update video set favorite_count = ? where id = ?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	result, err := update.Exec(newcount, Id)
+	if err != nil {
+		fmt.Println(err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(n)
+}
+
+func UpdateVideocommentcount(Id int64, newcount int64) {
+	update, err := Db.Prepare("update video set comment_count = ? where id = ?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	result, err := update.Exec(newcount, Id)
+	if err != nil {
+		fmt.Println(err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(n)
+}
+
 // ********************************************* video 功能区 ***********************************************************
 // 结束
 
@@ -363,4 +480,61 @@ func Updatename(newname string, id int) {
 		fmt.Println(err)
 	}
 	fmt.Println(n)
+}
+
+// ********************************************* comment 功能区 ***********************************************************
+
+// 新增评论
+func Insertcomment(userId int, videoId int, commentText string, createTime string) (commentId int64) {
+	insert, err := Db.Prepare("insert into comments(user_id,video_id,comment_text,create_time,if_cancel) values(?,?,?,?,?);")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer insert.Close()
+	result, err := insert.Exec(userId, videoId, commentText, createTime, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
+	Id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(Id, "号评论插入成功")
+	return Id
+}
+
+// 更新评论的状态即删除评论
+func Deletecomment(commentId int, videoId int) {
+	update := `update comments set if_cancel=1 where id = ? and video_id = ?`
+	reseult, err := Db.Exec(update, commentId, videoId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	n, err := reseult.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(n)
+}
+
+// 评论列表
+func Commentlist(videoId int, list *[]Comment) {
+	rows, err := Db.Query("select id,user_id,comment_text,create_time from comments where video_id = ? and if_cancel = 0 order by create_time desc ;", videoId) // 根据key:id来查询comment信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+	for rows.Next() {
+		var C Comment
+		var UserId int
+		err := rows.Scan(&C.Id, &UserId, &C.Content, &C.CreateDate) //接收信息
+		if err != nil {
+			fmt.Println(err)
+		}
+		user := QueryUserOne(UserId)
+		C.User = user
+		*list = append(*list, C)
+	}
 }
