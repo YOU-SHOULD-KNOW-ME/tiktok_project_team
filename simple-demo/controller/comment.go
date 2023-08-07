@@ -43,6 +43,7 @@ func index(s string) (res string) {
 }
 
 // CommentAction has practical effect, and check if token is valid
+// CommentAction has practical effect, and check if token is valid
 func CommentAction(c *gin.Context) {
 	token := c.Query("token")
 	actionType := c.Query("action_type")
@@ -62,6 +63,10 @@ func CommentAction(c *gin.Context) {
 			//数据库增加评论
 			commentId := Insertcomment(int(user.Id), videoId, text, createTime)
 			UpdateVideocommentcount(int64(videoId), num)
+			videoId, _ = strconv.Atoi(c.Query("video_id"))
+			createTime = time.Now().Format("2006-01-02 15:04:05")
+			//数据库增加评论
+			commentId = Insertcomment(int(user.Id), videoId, text, createTime)
 			c.JSON(http.StatusOK, CommentActionResponse{Response: Response{StatusCode: 0},
 				Comment: Comment{
 					Id:         commentId,
@@ -83,6 +88,11 @@ func CommentAction(c *gin.Context) {
 			}
 			Deletecomment(commentId, videoId)
 			UpdateVideocommentcount(int64(videoId), num)
+		} else if actionType == "2" {
+			//数据库删除对应评论ID的ID
+			commentId, _ := strconv.Atoi(c.Query("comment_id"))
+			videoId, _ := strconv.Atoi(c.Query("video_id"))
+			Deletecomment(commentId, videoId)
 			c.JSON(http.StatusOK, Response{StatusCode: 0})
 		}
 	} else {
@@ -105,6 +115,7 @@ func CommentList(c *gin.Context) {
 	}*/
 	videoId, _ := strconv.Atoi(c.Query("video_id"))
 	var list []Comment
+	Commentlist(videoId, &list)
 	Commentlist(videoId, &list)
 	c.JSON(http.StatusOK, CommentListResponse{
 		Response:    Response{StatusCode: 0},
