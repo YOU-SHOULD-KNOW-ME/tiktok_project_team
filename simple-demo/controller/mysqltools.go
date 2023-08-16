@@ -354,7 +354,14 @@ func UpdateVideoList(list *[]Video, token string) {
 		if favorite[int(V.Id)] == true {
 			V.IsFavorite = true
 		}
+		u := usersLoginInfo[token]
+		id1 := u.Id
+		status := QueryIsFollow(id1, int64(I))
 		user := QueryUserOne(I)
+		if id1 == int64(I) {
+			status = true
+		}
+		user.IsFollow = status
 		V.Author = user
 		*list = append(*list, V)
 	}
@@ -536,5 +543,130 @@ func Commentlist(videoId int, list *[]Comment) {
 		user := QueryUserOne(UserId)
 		C.User = user
 		*list = append(*list, C)
+	}
+} // ********************************************* comment 功能区 ***********************************************************
+
+// ********************************************* follow 功能区 ***********************************************************
+// 向数据库添加一对关注信息
+func InsertFollow(id1 int64, id2 int64) {
+	insert, err := Db.Prepare("insert into follow(user1, user2) values(?,?);")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer insert.Close()
+	result, err := insert.Exec(id1, id2)
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = result.LastInsertId()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(id1, "号关注", id2, "号成功")
+}
+
+func QueryIsFollow(id1 int64, id2 int64) (status bool) {
+	query, err := Db.Prepare("select * from follow where user1 = ? and user2 = ?;") //定义查询语句
+	if err != nil {
+		return false
+		fmt.Println(err)
+	}
+	defer query.Close()
+	var s string
+	err = query.QueryRow(id1, id2).Scan(&s)
+	if err == sql.ErrNoRows {
+		return false
+	} else if err != nil {
+		fmt.Println(err)
+	}
+	return true
+}
+
+func QueryFollow(id int64) {
+	query, err := Db.Prepare("select user2 from follow where user1 = ?;") //定义查询语句
+	if err != nil {
+		fmt.Println(err)
+	}
+	rows, err := query.Query(id) // 根据key:id来查询user信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+	for rows.Next() {
+		var i int
+		err := rows.Scan(&i) //接收信息
+		if err != nil {
+			fmt.Println(err)
+		}
+		u := QueryUserOne(i)
+		u.IsFollow = true
+		Follow_List = append(Follow_List, u)
+	}
+}
+
+func QueryFollower(id int64) {
+	query, err := Db.Prepare("select user1 from follow where user2 = ?;") //定义查询语句
+	if err != nil {
+		fmt.Println(err)
+	}
+	rows, err := query.Query(id) // 根据key:id来查询user信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+
+	for rows.Next() {
+		var i int
+		err := rows.Scan(&i) //接收信息
+		if err != nil {
+			fmt.Println(err)
+		}
+		u := QueryUserOne(i)
+		status := QueryIsFollow(id, int64(i))
+		fmt.Println(id, i, status)
+		u.IsFollow = status
+		Follower_List = append(Follower_List, u)
+	}
+}
+
+func DeleteFollow(id1 int64, id2 int64) {
+	deletevar, err := Db.Prepare("delete from follow where user1=? and user2=?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer deletevar.Close()
+	result, err := deletevar.Exec(id1, id2)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(n)
+}
+
+func UpdateFollowCount(id int64, n int64) {
+	update, err := Db.Prepare("update user set follow_count=? where id=?;")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	_, err = update.Exec(n, id)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func UpdateFollowerCount(id int64, n int64) {
+	update, err := Db.Prepare("update user set follower_count=? where id=?;")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer update.Close()
+	_, err = update.Exec(n, id)
+	if err != nil {
+		fmt.Println(err)
 	}
 }

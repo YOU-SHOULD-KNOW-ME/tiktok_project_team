@@ -29,6 +29,7 @@ func index(s string) (res string) {
 	M["nb"] = true
 	M["牛逼"] = true
 	M["tmd"] = true
+	M["tm"] = true
 	M["cnm"] = true
 	M["nmd"] = true
 	M["操你妈"] = true

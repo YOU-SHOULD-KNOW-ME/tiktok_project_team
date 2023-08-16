@@ -97,6 +97,10 @@ func Login(c *gin.Context) {
 				PublishVideos[i].IsFavorite = false
 			}
 		}
+		Follow_List = []User{}
+		Follower_List = []User{}
+		QueryFollow(users.Id)
+		QueryFollower(users.Id)
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 0},
 			UserId:   users.Id,

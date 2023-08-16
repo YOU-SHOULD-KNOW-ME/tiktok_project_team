@@ -115,6 +115,16 @@ func Deleteall() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	deletefollow, err := Db.Prepare("DELETE FROM follow;")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer deletefollow.Close()
+	_, err = deletefollow.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // ********************************************* user 功能区 ***********************************************************
@@ -278,6 +288,23 @@ func Updatename(newname string, id int) {
 		fmt.Println(err)
 	}
 	fmt.Println(n)
+}
+
+func QueryIsFollow(id1 int64, id2 int64) (status bool) {
+	query, err := Db.Prepare("select * from follow where user1 = ? and user2 = ?;") //定义查询语句
+	if err != nil {
+		return false
+		fmt.Println(err)
+	}
+	defer query.Close()
+	var s string
+	err = query.QueryRow(id1, id2).Scan(&s)
+	if err == sql.ErrNoRows {
+		return false
+	} else if err != nil {
+		fmt.Println(err)
+	}
+	return true
 }
 
 func main() { //一会要把它放到主函数中

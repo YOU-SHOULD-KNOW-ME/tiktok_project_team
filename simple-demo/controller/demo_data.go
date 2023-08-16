@@ -43,6 +43,10 @@ var DemoComments = []Comment{
 //	IsFollow:      true,
 //}
 
+var Follow_List = []User{}
+
+var Follower_List = []User{}
+
 var DemoUser = User{
 	Id:            0,
 	Name:          "安铜凯",
