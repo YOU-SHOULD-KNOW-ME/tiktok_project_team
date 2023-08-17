@@ -7,22 +7,14 @@ import (
 	"strconv"
 )
 
+var Friend_List []User
+
 type UserListResponse struct {
 	Response
 	UserList []User `json:"user_list"`
 }
 
 func removeElement(slice []User, element User) []User {
-	for i, v := range slice {
-		if v.Id == element.Id {
-			print("找到了")
-			return append(slice[:i], slice[i+1:]...)
-		}
-	}
-	return slice
-}
-
-func updateElement(slice []User, element User) []User {
 	for i, v := range slice {
 		if v.Id == element.Id {
 			print("找到了")
@@ -102,7 +94,6 @@ func RelationAction(c *gin.Context) {
 	}
 }
 
-// FollowList all users have same follow list
 func FollowList(c *gin.Context) {
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
@@ -112,7 +103,6 @@ func FollowList(c *gin.Context) {
 	})
 }
 
-// FollowerList all users have same follower list
 func FollowerList(c *gin.Context) {
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
@@ -122,12 +112,24 @@ func FollowerList(c *gin.Context) {
 	})
 }
 
-// FriendList all users have same friend list
 func FriendList(c *gin.Context) {
+	Friend_List = []User{}
+	fmt.Println("好友列表")
+	user_id := c.Query("user_id")
+	id2, err := strconv.Atoi(user_id)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, u := range Follow_List {
+		status := QueryIsFollow(u.Id, int64(id2))
+		if status {
+			Friend_List = append(Friend_List, u)
+		}
+	}
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
 			StatusCode: 0,
 		},
-		UserList: []User{DemoUser},
+		UserList: Friend_List,
 	})
 }
