@@ -9,7 +9,6 @@ var Db *sql.DB //这个是数据库连接池，用来管理数据库的各种链
 
 var user User
 
-
 type Response struct {
 	StatusCode int32  `json:"status_code"`
 	StatusMsg  string `json:"status_msg,omitempty"`
@@ -49,8 +48,10 @@ type User struct {
 
 type Message struct {
 	Id         int64  `json:"id,omitempty"`
+	ToUserId   int64  `json:"to_user_id,reception"`
+	FromUserId int64  `json:"from_user_id,from_id"`
 	Content    string `json:"content,omitempty"`
-	CreateTime string `json:"create_time,omitempty"`
+	CreateTime int64  `json:"create_time,omitempty"`
 }
 
 type MessageSendEvent struct {

@@ -126,6 +126,12 @@ func FriendList(c *gin.Context) {
 			Friend_List = append(Friend_List, u)
 		}
 	}
+	for _, u := range Friend_List {
+		chatKey := genChatKey(int64(id2), u.Id)
+		tempChat[chatKey] = []Message{}
+		QueryMessage(int64(id2), u.Id, chatKey)
+		QueryMessage(u.Id, int64(id2), chatKey)
+	}
 	c.JSON(http.StatusOK, UserListResponse{
 		Response: Response{
 			StatusCode: 0,

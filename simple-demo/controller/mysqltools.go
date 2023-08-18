@@ -566,14 +566,14 @@ func InsertFollow(id1 int64, id2 int64) {
 }
 
 func QueryIsFollow(id1 int64, id2 int64) (status bool) {
-	query, err := Db.Prepare("select * from follow where user1 = ? and user2 = ?;") //定义查询语句
+	query, err := Db.Prepare("select id from follow where user1 = ? and user2 = ?;") //定义查询语句
 	if err != nil {
 		return false
 		fmt.Println(err)
 	}
 	defer query.Close()
-	var s string
-	err = query.QueryRow(id1, id2).Scan(&s)
+	var id string
+	err = query.QueryRow(id1, id2).Scan(&id)
 	if err == sql.ErrNoRows {
 		return false
 	} else if err != nil {
@@ -670,3 +670,47 @@ func UpdateFollowerCount(id int64, n int64) {
 		fmt.Println(err)
 	}
 }
+
+// ********************************************* follow 功能区 ***********************************************************
+
+// ********************************************* message 功能区 ***********************************************************
+
+func InsertMessage(id int64, touserid int64, fromuserid int64, content string, createtime int64) {
+
+	insert, err := Db.Prepare("insert into message(id,touserid,fromuserid,content,createtime) values(?,?,?,?,?);")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer insert.Close()
+	_, err = insert.Exec(id, touserid, fromuserid, content, createtime)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func QueryMessage(user1 int64, user2 int64, chatkey string) {
+
+	query, err := Db.Prepare("select * from message where fromuserid = ? and touserid = ?;") //定义查询语句
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	rows, err := query.Query(user1, user2) // 根据key:id来查询user信息
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close() // 记得关闭连接，要不然别人无法访问数据库
+	for rows.Next() {
+		var m Message
+
+		err := rows.Scan(&m.Id, &m.FromUserId, &m.ToUserId, &m.Content, &m.CreateTime) //接收信息
+		fmt.Println(m.ToUserId, m.FromUserId)
+		if err != nil {
+			fmt.Println(err)
+		}
+		tempChat[chatkey] = append(tempChat[chatkey], m)
+	}
+}
+
+// ********************************************* message 功能区 ***********************************************************

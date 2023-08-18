@@ -125,6 +125,15 @@ func Deleteall() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	deletemessage, err := Db.Prepare("DELETE FROM message;")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer deletemessage.Close()
+	_, err = deletemessage.Exec()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // ********************************************* user 功能区 ***********************************************************
