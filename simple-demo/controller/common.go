@@ -38,8 +38,8 @@ type User struct {
 	FollowCount      int64  `json:"follow_count,omitempty"`   // 被关注总数
 	FollowerCount    int64  `json:"follower_count,omitempty"` // 关注总数
 	IsFollow         bool   `json:"is_follow,omitempty"`      // 是否关注了这个用户
-	Avatar           string `json:"string"`                   // 头像
-	Background_image string `json:"background"`               // 首页用户页顶部大图
+	Avatar           string `json:"avatar"`                   // 头像
+	Background_image string `json:"background_image"`         // 首页用户页顶部大图
 	Signature        string `json:"signature"`                // 个人简介
 	Total_favorited  string `json:"total_favorite"`           // 获赞数量
 	Work_count       int64  `json:"work_count"`               // 作品数
